@@ -81,14 +81,17 @@ st.subheader("📊 Spending by Category")
 if not df.empty:
     cat_data = df.groupby("category")["amount"].sum()
 
-    fig, ax = plt.subplots()
-    cat_data.plot(kind="bar", ax=ax)
-    ax.set_ylabel("Amount")
-    ax.set_xlabel("Category")
-
-    st.pyplot(fig)
+    if not cat_data.empty:
+        fig, ax = plt.subplots()
+        cat_data.plot(kind="bar", ax=ax)
+        ax.set_ylabel("Amount")
+        ax.set_xlabel("Category")
+        st.pyplot(fig)
+    else:
+        st.info("No category data to display.")
 else:
-    st.info("No data available for selected filters.")
+    st.info("No expenses added yet.")
+
 
 # =========================
 # MONTHLY TREND
@@ -97,12 +100,15 @@ st.subheader("📈 Monthly Spending Trend")
 
 monthly_data = expenses.groupby("month")["amount"].sum()
 
-fig2, ax2 = plt.subplots()
-monthly_data.plot(marker="o", ax=ax2)
-ax2.set_ylabel("Total Spending")
-ax2.set_xlabel("Month")
+if not monthly_data.empty:
+    fig2, ax2 = plt.subplots()
+    monthly_data.plot(marker="o", ax=ax2)
+    ax2.set_ylabel("Total Spending")
+    ax2.set_xlabel("Month")
+    st.pyplot(fig2)
+else:
+    st.info("No monthly data available.")
 
-st.pyplot(fig2)
 
 # =========================
 # ADD NEW EXPENSE
