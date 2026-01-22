@@ -33,6 +33,9 @@ if st.session_state.user_id not in st.session_state.user_data:
     st.session_state.user_data[st.session_state.user_id] = df
 
 expenses = st.session_state.user_data[st.session_state.user_id]
+# Ensure amount is numeric (CRITICAL FIX)
+expenses["amount"] = pd.to_numeric(expenses["amount"], errors="coerce").fillna(0)
+
 
 # =========================
 # SIDEBAR FILTERS
@@ -141,9 +144,10 @@ st.info("✏ Edit values or 🗑 delete rows (only affects your session).")
 edited_df = st.data_editor(
     expenses,
     num_rows="dynamic",
-    use_container_width=True,
+    width="stretch",
     key="expense_editor"
 )
+
 
 if not edited_df.equals(expenses):
     edited_df["date"] = pd.to_datetime(edited_df["date"])
