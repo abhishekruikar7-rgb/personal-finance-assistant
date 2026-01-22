@@ -92,20 +92,34 @@ else:
     st.info("No category data available.")
 
 # =========================
-# MONTHLY TREND (FINAL SAFE FIX)
+# MONTHLY TREND (SAFE + CLOUD FIX)
 # =========================
 st.subheader("📈 Monthly Spending Trend")
 
-monthly_data = expenses.groupby("month")["amount"].sum()
+monthly_data = (
+    expenses
+    .groupby("month", dropna=True)["amount"]
+    .sum()
+    .astype(float)
+)
 
-if not monthly_data.empty and monthly_data.sum() > 0:
+# ✅ Remove zero / invalid values
+monthly_data = monthly_data[monthly_data > 0]
+
+if len(monthly_data) > 0:
     fig2, ax2 = plt.subplots()
-    monthly_data.plot(marker="o", ax=ax2)
+    ax2.plot(
+        monthly_data.index,
+        monthly_data.values,
+        marker="o"
+    )
     ax2.set_ylabel("Total Spending")
     ax2.set_xlabel("Month")
+    ax2.set_title("Monthly Expense Trend")
     st.pyplot(fig2)
 else:
-    st.info("No monthly spending data available.")
+    st.info("No valid monthly spending data to display.")
+
 
 # =========================
 # ADD NEW EXPENSE
