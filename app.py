@@ -7,7 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Personal Finance Assistant", layout="wide")
 
 # =========================
-# USER SESSION (CRITICAL FIX)
+# USER SESSION
 # =========================
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
@@ -16,40 +16,37 @@ if "user_data" not in st.session_state:
     st.session_state.user_data = {}
 
 # =========================
-# LOAD DATA PER USER (ISOLATED)
+# LOAD DATA PER USER
 # =========================
 if st.session_state.user_id not in st.session_state.user_data:
-    df = pd.read_csv("data/expenses.csv")
+    try:
+        df = pd.read_csv("data/expenses.csv")
+    except:
+        df = pd.DataFrame(columns=["date", "description", "amount", "category", "month"])
 
-    df["date"] = pd.to_datetime(df["date"], errors="coerce")
-    df["month"] = df["date"].dt.strftime("%Y-%m")
+    df["date"] = pd.to_datetime(df.get("date"), errors="coerce")
+    df["amount"] = pd.to_numeric(df.get("amount"), errors="coerce").fillna(0)
     df["category"] = (
-        df["category"]
+        df.get("category", "Other")
         .astype(str)
         .replace("nan", "Other")
         .replace("", "Other")
     )
+    df["month"] = df["date"].dt.strftime("%Y-%m")
 
     st.session_state.user_data[st.session_state.user_id] = df
 
 expenses = st.session_state.user_data[st.session_state.user_id]
-# Ensure amount is numeric (CRITICAL FIX)
-expenses["amount"] = pd.to_numeric(expenses["amount"], errors="coerce").fillna(0)
-
 
 # =========================
 # SIDEBAR FILTERS
 # =========================
 st.sidebar.header("📊 Filters")
 
-months = ["All"] + sorted(
-    expenses["month"].dropna().astype(str).unique().tolist()
-)
+months = ["All"] + sorted(expenses["month"].dropna().unique().tolist())
 selected_month = st.sidebar.selectbox("Select Month", months)
 
-categories = ["All"] + sorted(
-    expenses["category"].dropna().astype(str).unique().tolist()
-)
+categories = ["All"] + sorted(expenses["category"].dropna().unique().tolist())
 selected_category = st.sidebar.selectbox("Select Category", categories)
 
 # =========================
@@ -69,16 +66,20 @@ if selected_category != "All":
 st.title("💰 Personal Finance Assistant")
 
 col1, col2, col3 = st.columns(3)
+
 col1.metric("Total Spent", f"₹{df['amount'].sum():.2f}")
 col2.metric("Transactions", len(df))
-col3.metric("Average Expense", f"₹{df['amount'].mean():.2f}" if not df.empty else "₹0")
+col3.metric(
+    "Average Expense",
+    f"₹{df['amount'].mean():.2f}" if not df.empty else "₹0.00"
+)
 
 # =========================
 # CATEGORY BAR CHART
 # =========================
 st.subheader("📊 Spending by Category")
 
-if not df.empty:
+if not df.empty and df["amount"].sum() > 0:
     cat_data = df.groupby("category")["amount"].sum()
 
     if not cat_data.empty:
@@ -87,28 +88,24 @@ if not df.empty:
         ax.set_ylabel("Amount")
         ax.set_xlabel("Category")
         st.pyplot(fig)
-    else:
-        st.info("No category data to display.")
 else:
-    st.info("No expenses added yet.")
-
+    st.info("No category data available.")
 
 # =========================
-# MONTHLY TREND
+# MONTHLY TREND (FINAL SAFE FIX)
 # =========================
 st.subheader("📈 Monthly Spending Trend")
 
 monthly_data = expenses.groupby("month")["amount"].sum()
 
-if not monthly_data.empty:
+if not monthly_data.empty and monthly_data.sum() > 0:
     fig2, ax2 = plt.subplots()
     monthly_data.plot(marker="o", ax=ax2)
     ax2.set_ylabel("Total Spending")
     ax2.set_xlabel("Month")
     st.pyplot(fig2)
 else:
-    st.info("No monthly data available.")
-
+    st.info("No monthly spending data available.")
 
 # =========================
 # ADD NEW EXPENSE
@@ -130,7 +127,7 @@ with st.form("expense_form"):
         new_row = {
             "date": pd.to_datetime(date),
             "description": description,
-            "amount": amount,
+            "amount": float(amount),
             "category": category,
             "month": pd.to_datetime(date).strftime("%Y-%m")
         }
@@ -145,7 +142,7 @@ with st.form("expense_form"):
 # EDIT / DELETE EXPENSES
 # =========================
 st.subheader("📝 Edit / Delete Expenses")
-st.info("✏ Edit values or 🗑 delete rows (only affects your session).")
+st.info("✏ Edit or 🗑 delete rows (session-only data).")
 
 edited_df = st.data_editor(
     expenses,
@@ -154,17 +151,17 @@ edited_df = st.data_editor(
     key="expense_editor"
 )
 
-
 if not edited_df.equals(expenses):
-    edited_df["date"] = pd.to_datetime(edited_df["date"])
+    edited_df["date"] = pd.to_datetime(edited_df["date"], errors="coerce")
+    edited_df["amount"] = pd.to_numeric(edited_df["amount"], errors="coerce").fillna(0)
     edited_df["month"] = edited_df["date"].dt.strftime("%Y-%m")
 
     st.session_state.user_data[st.session_state.user_id] = edited_df
-    st.success("Changes saved successfully!")
+    st.success("Changes saved!")
     st.rerun()
 
 # =========================
-# RESET BUTTON (OPTIONAL)
+# RESET USER DATA
 # =========================
 if st.sidebar.button("🔄 Reset My Data"):
     st.session_state.user_data[st.session_state.user_id] = pd.DataFrame(
