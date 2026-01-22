@@ -7,9 +7,9 @@ from datetime import datetime
 
 st.set_page_config(page_title="Personal Finance Assistant", layout="wide")
 
-# =========================
+ 
 # FILE STORAGE SETUP
-# =========================
+
 DATA_DIR = "data/users"
 os.makedirs(DATA_DIR, exist_ok=True)
 
@@ -35,9 +35,9 @@ def load_user_data(user_id):
 def save_user_data(user_id, df):
     df.to_csv(get_user_file(user_id), index=False)
 
-# =========================
+
 # USER SESSION
-# =========================
+
 if "user_id" not in st.session_state:
     st.session_state.user_id = str(uuid.uuid4())
 
@@ -46,9 +46,9 @@ if "expenses" not in st.session_state:
 
 expenses = st.session_state.expenses
 
-# =========================
+
 # SIDEBAR FILTERS
-# =========================
+
 st.sidebar.header("📊 Filters")
 
 months = ["All"] + sorted(expenses["month"].dropna().unique().tolist())
@@ -57,9 +57,9 @@ selected_month = st.sidebar.selectbox("Select Month", months)
 categories = ["All"] + sorted(expenses["category"].dropna().unique().tolist())
 selected_category = st.sidebar.selectbox("Select Category", categories)
 
-# =========================
+
 # APPLY FILTERS
-# =========================
+
 df = expenses.copy()
 
 if selected_month != "All":
@@ -68,9 +68,9 @@ if selected_month != "All":
 if selected_category != "All":
     df = df[df["category"] == selected_category]
 
-# =========================
+
 # DASHBOARD KPIs
-# =========================
+
 st.title("💰 Personal Finance Assistant")
 
 col1, col2, col3 = st.columns(3)
@@ -81,9 +81,9 @@ col3.metric(
     f"₹{df['amount'].mean():.2f}" if not df.empty else "₹0.00"
 )
 
-# =========================
+
 # CATEGORY BAR CHART
-# =========================
+
 st.subheader("📊 Spending by Category")
 
 if not df.empty and df["amount"].sum() > 0:
@@ -98,9 +98,9 @@ if not df.empty and df["amount"].sum() > 0:
 else:
     st.info("No category data available.")
 
-# =========================
+
 # MONTHLY TREND (SAFE PLOT)
-# =========================
+
 st.subheader("📈 Monthly Spending Trend")
 
 monthly_summary = (
@@ -122,9 +122,9 @@ if not monthly_summary.empty and monthly_summary["amount"].sum() > 0:
 else:
     st.info("No monthly data available yet.")
 
-# =========================
+
 # ADD NEW EXPENSE
-# =========================
+
 st.subheader("➕ Add New Expense")
 
 with st.form("expense_form"):
@@ -158,9 +158,9 @@ with st.form("expense_form"):
         st.success("Expense added successfully!")
         st.rerun()
 
-# =========================
+
 # EDIT / DELETE EXPENSES
-# =========================
+
 st.subheader("📝 Edit / Delete Expenses")
 st.info("✏ Edit or 🗑 delete rows (saved automatically).")
 
@@ -184,9 +184,9 @@ if not edited_df.equals(expenses):
     st.success("Changes saved!")
     st.rerun()
 
-# =========================
+
 # RESET USER DATA
-# =========================
+
 if st.sidebar.button("🔄 Reset My Data"):
     empty_df = pd.DataFrame(
         columns=["date", "description", "amount", "category", "month"]
