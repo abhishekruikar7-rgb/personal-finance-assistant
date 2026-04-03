@@ -17,7 +17,7 @@ def generate_pdf_report(username, month, df):
     # Summary
     total_spent = df['amount'].sum()
     pdf.set_font("Helvetica", "B", 14)
-    pdf.cell(0, 10, f"Total Spending: ₹{total_spent:,.2f}", ln=True)
+    pdf.cell(0, 10, f"Total Spending: Rs. {total_spent:,.2f}", ln=True)
     pdf.ln(5)
     
     # Table Header
@@ -34,7 +34,7 @@ def generate_pdf_report(username, month, df):
         pdf.cell(30, 8, str(row['date'].date()), 1)
         pdf.cell(80, 8, str(row['description'])[:40], 1)
         pdf.cell(40, 8, str(row['category']), 1)
-        pdf.cell(30, 8, f"₹{row['amount']:,.2f}", 1, 1, "R")
+        pdf.cell(30, 8, f"{row['amount']:,.2f}", 1, 1, "R")
     
     # Save to temp file
     temp_dir = tempfile.gettempdir()
